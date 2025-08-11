@@ -93,17 +93,7 @@ export class JudgementAgent {
       
     } catch (error) {
       console.error("判断节点失败:", error);
-      
-      // 提供智能的默认判断
-      const isSimpleTask = nodeContent.length < 20 && !nodeContent.includes('如何') && !nodeContent.includes('怎样');
-      const defaultResult = {
-        canDirectlyAnswer: isSimpleTask,
-        reasoning: `判断过程出错，基于任务长度(${nodeContent.length}字符)进行默认判断`,
-        confidence: 0.5
-      };
-      
-      console.log("使用默认判断结果:", defaultResult);
-      return defaultResult;
+      throw error;
     }
   }
 }
