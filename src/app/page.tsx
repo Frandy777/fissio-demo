@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DecomposeInput } from "@/components/ui/DecomposeInput";
 import { useFlowStore } from "@/store/useFlowStore";
+import { useHistoryStorage } from "@/hooks/useHistoryStorage";
 import { TreeNode, DecomposeMode } from "@/types";
 
 export default function Home() {
@@ -12,11 +13,16 @@ export default function Home() {
   const router = useRouter();
 
   // 分别获取需要的方法
+  const treeData = useFlowStore((state) => state.treeData);
   const setTreeData = useFlowStore((state) => state.setTreeData);
   const startStreamDecomposition = useFlowStore(
     (state) => state.startStreamDecomposition,
   );
   const setStoreDecomposeMode = useFlowStore((state) => state.setDecomposeMode);
+  const resetState = useFlowStore((state) => state.resetState);
+
+  // 历史记录与会话控制
+  const { autoSaveHistory, clearCurrentSession } = useHistoryStorage();
 
   const handleDecompose = async (
     inputText: string,
@@ -26,6 +32,13 @@ export default function Home() {
     setError(null);
 
     try {
+      // 在新建前，保存当前项目并重置会话，避免覆盖现有项目
+      if (treeData) {
+        autoSaveHistory();
+      }
+      resetState();
+      clearCurrentSession();
+
       // 立即创建根节点
       const rootNode: TreeNode = {
         id: "root",
