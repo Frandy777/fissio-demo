@@ -269,7 +269,7 @@ function FlowContent() {
             nodeTypes={nodeTypes}
             fitView
             onInit={(instance) => setRf(instance)}
-            attributionPosition="top-right"
+            proOptions={{ hideAttribution: true }}
             className="bg-gray-50"
           >
             <Background
