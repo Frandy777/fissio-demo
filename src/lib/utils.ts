@@ -144,6 +144,19 @@ export const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   defaultExpandedLevels: 2 // 默认展开层级数（0-2层展开）
 }
 
+// 估算节点渲染宽度（与 `CustomNode` 的 min/max 保持一致范围）
+const MIN_NODE_WIDTH = 240
+const MAX_NODE_WIDTH = 300
+const HORIZONTAL_GAP = 60 // 子节点左边界到父节点右边界的固定距离
+
+function estimateNodeWidth(content: string): number {
+  // 极简启发式：按内容长度在最小与最大宽度之间线性插值
+  // 这样不同父节点宽度会产生不同的右边界，从而打破同列对齐
+  const k = 5 // 每个字符贡献的像素估计
+  const est = MIN_NODE_WIDTH + Math.min((content?.length || 0) * k, MAX_NODE_WIDTH - MIN_NODE_WIDTH)
+  return Math.max(MIN_NODE_WIDTH, Math.min(MAX_NODE_WIDTH, Math.round(est)))
+}
+
 // 为节点分配层级
 export function assignLevels(rootId: string, nodes: FlowNode[], edges: FlowEdge[]): FlowNode[] {
   const idToLevel = new Map<string, number>()
@@ -280,7 +293,8 @@ export function computeLayeredGridLayout(
 export function treeToFlowData(
   treeData: TreeNode,
   startX: number = 0,
-  startY: number = 0
+  startY: number = 0,
+  nodeWidths: Record<string, number> = {}
 ): { nodes: FlowNode[], edges: FlowEdge[] } {
   const nodes: FlowNode[] = []
   const edges: FlowEdge[] = []
@@ -326,6 +340,8 @@ export function treeToFlowData(
 
     // 如果节点展开且有子节点，处理子节点
     if (flowNode.data.expanded && node.children && node.children.length > 0) {
+      // 优先使用真实测量宽度，否则使用估算宽度
+      const parentEstimatedWidth = nodeWidths[node.id] ?? estimateNodeWidth(node.content)
       // 计算每个子节点需要的高度
       const childrenHeights = node.children.map(child => calculateSubtreeHeight(child))
       const totalChildrenHeight = childrenHeights.reduce((sum, height) => sum + height, 0)
@@ -334,7 +350,9 @@ export function treeToFlowData(
       let currentChildY = y - totalChildrenHeight / 2
 
       node.children.forEach((child, index) => {
-        const childX = x + levelWidth
+        // 子节点左边界 = 父节点右边界 + 固定间距
+        // 父节点右边界 ≈ x + 估算宽度
+        const childX = x + parentEstimatedWidth + HORIZONTAL_GAP
         const childHeight = childrenHeights[index]
 
         // 子节点在其分配空间内垂直居中
@@ -345,7 +363,7 @@ export function treeToFlowData(
           id: `${node.id}-${child.id}`,
           source: node.id,
           target: child.id,
-          type: 'smoothstep'
+          type: 'step'
         }
         edges.push(edge)
 

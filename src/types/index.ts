@@ -96,6 +96,7 @@ export interface LayoutConfig {
 export interface FlowState {
   nodes: FlowNode[]
   edges: FlowEdge[]
+  nodeWidths: Record<string, number>
   selectedNode: FlowNode | null
   searchQuery: string
   treeData: TreeNode | null
@@ -134,6 +135,7 @@ export interface FlowState {
   updateLayoutConfig: (config: Partial<LayoutConfig>) => void // 新增：更新布局配置
   getVisibleNodes: () => FlowNode[] // 新增：获取可见节点
   getVisibleEdges: () => FlowEdge[] // 新增：获取可见边
+  setNodeWidths: (widths: Record<string, number>) => void // 新增：设置节点真实宽度
 } 
 
 // 历史记录相关类型

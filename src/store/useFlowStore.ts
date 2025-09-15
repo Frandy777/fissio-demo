@@ -4,17 +4,18 @@ import { treeToFlowData, computeLayeredGridLayout, DEFAULT_LAYOUT_CONFIG } from 
 
 
 
-// 将树数据转换为流数据的纯函数
-function convertTreeToFlowData(treeData: TreeNode | null) {
+// 将树数据转换为流数据的纯函数（支持传入已测量的节点宽度）
+function convertTreeToFlowData(treeData: TreeNode | null, nodeWidths: Record<string, number>) {
   if (!treeData) {
     return { nodes: [], edges: [] }
   }
-  return treeToFlowData(treeData, 0, 0)
+  return treeToFlowData(treeData, 0, 0, nodeWidths)
 }
 
 export const useFlowStore = create<FlowState>((set, get) => ({
   nodes: [],
   edges: [],
+  nodeWidths: {},
   selectedNode: null,
   searchQuery: '',
   treeData: null,
@@ -47,7 +48,8 @@ export const useFlowStore = create<FlowState>((set, get) => ({
   },
   
   setTreeData: (treeData) => {
-    const { nodes, edges } = convertTreeToFlowData(treeData)
+    const { nodeWidths } = get()
+    const { nodes, edges } = convertTreeToFlowData(treeData, nodeWidths)
     const currentState = get()
     const isFirstTime = !currentState.treeData && treeData // 首次设置根节点
     
@@ -117,7 +119,8 @@ export const useFlowStore = create<FlowState>((set, get) => ({
               
               if (data.type === 'update' && data.treeData) {
                 // 更新树数据
-                const { nodes, edges } = convertTreeToFlowData(data.treeData)
+                const { nodeWidths } = get()
+                const { nodes, edges } = convertTreeToFlowData(data.treeData, nodeWidths)
                 set({ 
                   treeData: data.treeData,
                   nodes,
@@ -140,7 +143,8 @@ export const useFlowStore = create<FlowState>((set, get) => ({
               } else if (data.type === 'complete') {
                 // 分解完成
                 if (data.treeData) {
-                  const { nodes, edges } = convertTreeToFlowData(data.treeData)
+                  const { nodeWidths } = get()
+                  const { nodes, edges } = convertTreeToFlowData(data.treeData, nodeWidths)
                   set({ 
                     treeData: data.treeData,
                     nodes,
@@ -168,7 +172,8 @@ export const useFlowStore = create<FlowState>((set, get) => ({
               } else if (data.type === 'terminated') {
                 // 分解被终止
                 if (data.treeData) {
-                  const { nodes, edges } = convertTreeToFlowData(data.treeData)
+                  const { nodeWidths } = get()
+                  const { nodes, edges } = convertTreeToFlowData(data.treeData, nodeWidths)
                   set({ 
                     treeData: data.treeData,
                     nodes,
@@ -309,7 +314,8 @@ export const useFlowStore = create<FlowState>((set, get) => ({
         isNewDecomposition: true
       })
     } else {
-      const { nodes: newNodes, edges: newEdges } = convertTreeToFlowData(updatedTreeData)
+      const { nodeWidths } = get()
+      const { nodes: newNodes, edges: newEdges } = convertTreeToFlowData(updatedTreeData, nodeWidths)
       // 如果当前选中节点位于被删除子树，清空选中
       const stillExists = selectedNode && newNodes.some(n => n.id === selectedNode.id)
       set({
@@ -346,7 +352,8 @@ export const useFlowStore = create<FlowState>((set, get) => ({
     }
 
     const updatedTreeData = updateTreeNodeExpanded(treeData)
-    const { nodes: newNodes, edges: newEdges } = convertTreeToFlowData(updatedTreeData)
+    const { nodeWidths } = get()
+    const { nodes: newNodes, edges: newEdges } = convertTreeToFlowData(updatedTreeData, nodeWidths)
     
     set({ 
       treeData: updatedTreeData,
@@ -375,7 +382,8 @@ export const useFlowStore = create<FlowState>((set, get) => ({
     }
 
     const updatedTreeData = updateTreeNodeContent(treeData)
-    const { nodes: newNodes, edges: newEdges } = convertTreeToFlowData(updatedTreeData)
+    const { nodeWidths } = get()
+    const { nodes: newNodes, edges: newEdges } = convertTreeToFlowData(updatedTreeData, nodeWidths)
     
     set({ 
       treeData: updatedTreeData,
@@ -426,7 +434,8 @@ export const useFlowStore = create<FlowState>((set, get) => ({
       }
 
       const interimTreeData = clearChildren(treeData)
-      const interimFlow = convertTreeToFlowData(interimTreeData)
+      const { nodeWidths } = get()
+      const interimFlow = convertTreeToFlowData(interimTreeData, nodeWidths)
       set({
         treeData: interimTreeData,
         nodes: interimFlow.nodes,
@@ -501,7 +510,8 @@ export const useFlowStore = create<FlowState>((set, get) => ({
                 }
 
                 const updatedTreeData = replaceNodeSubtree(currentState.treeData!)
-                const { nodes, edges } = convertTreeToFlowData(updatedTreeData)
+                const { nodeWidths } = get()
+                const { nodes, edges } = convertTreeToFlowData(updatedTreeData, nodeWidths)
                 set({ 
                   treeData: updatedTreeData,
                   nodes,
@@ -544,7 +554,8 @@ export const useFlowStore = create<FlowState>((set, get) => ({
                   }
 
                   const finalTreeData = replaceNodeSubtree(currentState.treeData!)
-                  const { nodes, edges } = convertTreeToFlowData(finalTreeData)
+                  const { nodeWidths } = get()
+                  const { nodes, edges } = convertTreeToFlowData(finalTreeData, nodeWidths)
                   set({ 
                     treeData: finalTreeData,
                     nodes,
@@ -625,6 +636,7 @@ export const useFlowStore = create<FlowState>((set, get) => ({
     set({
       nodes: [],
       edges: [],
+      nodeWidths: {},
       selectedNode: null,
       searchQuery: '',
       treeData: null,
@@ -638,6 +650,16 @@ export const useFlowStore = create<FlowState>((set, get) => ({
       maxVisibleLevel: DEFAULT_LAYOUT_CONFIG.defaultExpandedLevels,
       layoutConfig: DEFAULT_LAYOUT_CONFIG
     })
+  },
+
+  // 记录节点真实宽度，并据此刷新布局
+  setNodeWidths: (widths: Record<string, number>) => {
+    set((state) => ({ nodeWidths: { ...state.nodeWidths, ...widths } }))
+    const state = get()
+    if (state.treeData) {
+      const { nodes, edges } = convertTreeToFlowData(state.treeData, state.nodeWidths)
+      set({ nodes, edges })
+    }
   },
 
   setAutoSaveCallback: (callback) => {

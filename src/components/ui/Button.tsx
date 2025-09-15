@@ -1,5 +1,14 @@
 import { ButtonHTMLAttributes, forwardRef, useState, ReactNode } from "react";
-import { ListTodo, Atom, CornerDownLeft, Save, RotateCcw, Trash2, CircleStop, Plus } from "lucide-react";
+import {
+  ListTodo,
+  Atom,
+  CornerDownLeft,
+  Save,
+  RotateCcw,
+  Trash2,
+  CircleStop,
+  Plus,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -66,13 +75,15 @@ export const ModeToggle = forwardRef<HTMLDivElement, ModeToggleProps>(
             align === "left" ? "left-0" : "right-0",
           )}
         >
-          <div className="flex items-start gap-3">
+          <div className="grid grid-cols-[auto_1fr] gap-x-1 items-start">
             <div className="mt-0.5">{icon}</div>
-            <div className="flex-1">
-              <div className="text-[15px] font-semibold text-gray-900">{title}</div>
-              <div className="mt-1 text-[13px] leading-5 text-gray-600">
-                {description}
+            <div>
+              <div className="text-[18px] font-semibold text-gray-900">
+                {title}
               </div>
+            </div>
+            <div className="col-span-2 mt-1 text-[13px] leading-5 text-gray-600">
+              {description}
             </div>
           </div>
         </div>
@@ -108,7 +119,7 @@ export const ModeToggle = forwardRef<HTMLDivElement, ModeToggleProps>(
             <ListTodo
               className={cn(
                 "w-4 h-4 transition-colors",
-                mode === "task" ? "text-gray-900" : "text-gray-400",
+                mode === "task" ? "font-serif text-gray-900" : "text-gray-400",
               )}
             />
             {hovered === "task" && (
@@ -194,60 +205,55 @@ export interface ActionButtonProps
   isLoading?: boolean;
 }
 
-export const UpdateNodeButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
-  ({ className, isLoading = false, children, ...props }, ref) => {
-    return (
-      <Button
-        ref={ref}
-        variant="ghost"
-        className={cn(
-          "bg-black text-white hover:bg-gray-900",
-          className,
-        )}
-        {...props}
-      >
-        <Save className="w-4 h-4 mr-2" />
-        {isLoading ? (children ?? "Saving...") : (children ?? "Update Node")}
-      </Button>
-    );
-  },
-);
+export const UpdateNodeButton = forwardRef<
+  HTMLButtonElement,
+  ActionButtonProps
+>(({ className, isLoading = false, children, ...props }, ref) => {
+  return (
+    <Button
+      ref={ref}
+      variant="ghost"
+      className={cn("bg-black text-white hover:bg-gray-900", className)}
+      {...props}
+    >
+      <Save className="w-4 h-4 mr-2" />
+      {isLoading ? (children ?? "Saving...") : (children ?? "Update Node")}
+    </Button>
+  );
+});
 UpdateNodeButton.displayName = "UpdateNodeButton";
 
-export const RedecomposeButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
-  ({ className, isLoading = false, children, ...props }, ref) => {
-    return (
-      <Button
-        ref={ref}
-        variant="outline"
-        className={cn(className)}
-        {...props}
-      >
-        <RotateCcw className="w-4 h-4 mr-2" />
-        {isLoading
-          ? (children ?? "Decomposing...")
-          : (children ?? "Re-decompose")}
-      </Button>
-    );
-  },
-);
+export const RedecomposeButton = forwardRef<
+  HTMLButtonElement,
+  ActionButtonProps
+>(({ className, isLoading = false, children, ...props }, ref) => {
+  return (
+    <Button ref={ref} variant="outline" className={cn(className)} {...props}>
+      <RotateCcw className="w-4 h-4 mr-2" />
+      {isLoading
+        ? (children ?? "Decomposing...")
+        : (children ?? "Re-decompose")}
+    </Button>
+  );
+});
 RedecomposeButton.displayName = "RedecomposeButton";
 
-export const DeleteNodeButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
-  ({ className, isLoading = false, children, ...props }, ref) => {
-    return (
-      <Button
-        ref={ref}
-        variant="destructive"
-        className={cn("", className)}
-        {...props}
-      >
-        <Trash2 className="w-4 h-4 mr-2" />
-        {isLoading ? (children ?? "Deleting...") : (children ?? "Delete Node")}
-      </Button>
-    );
-  },
-);
+export const DeleteNodeButton = forwardRef<
+  HTMLButtonElement,
+  ActionButtonProps
+>(({ className, isLoading = false, children, ...props }, ref) => {
+  return (
+    <Button
+      ref={ref}
+      variant="destructive"
+      className={cn("", className)}
+      {...props}
+    >
+      <Trash2 className="w-4 h-4 mr-2" />
+      {isLoading ? (children ?? "Deleting...") : (children ?? "Delete Node")}
+    </Button>
+  );
+});
 DeleteNodeButton.displayName = "DeleteNodeButton";
 
 export const TerminateButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
@@ -274,25 +280,25 @@ export interface NewProjectButtonProps
   onNewProject?: () => void;
 }
 
-export const NewProjectButton = forwardRef<HTMLButtonElement, NewProjectButtonProps>(
-  ({ className, onNewProject, children, ...props }, ref) => {
-    return (
-      <Button
-        ref={ref}
-        onClick={onNewProject}
-        className={cn(
-          "w-full justify-center gap-2 bg-black text-white hover:bg-black/90 h-10 rounded-xl",
-          className,
-        )}
-        variant="default"
-        size="sm"
-        {...props}
-      >
-        <Plus className="w-4 h-4" />
-        {children ?? "New Project"}
-      </Button>
-    );
-  },
-);
+export const NewProjectButton = forwardRef<
+  HTMLButtonElement,
+  NewProjectButtonProps
+>(({ className, onNewProject, children, ...props }, ref) => {
+  return (
+    <Button
+      ref={ref}
+      onClick={onNewProject}
+      className={cn(
+        "w-full justify-center gap-2 bg-black text-white hover:bg-black/90 h-10 rounded-xl",
+        className,
+      )}
+      variant="default"
+      size="sm"
+      {...props}
+    >
+      <Plus className="w-4 h-4" />
+      {children ?? "New Project"}
+    </Button>
+  );
+});
 NewProjectButton.displayName = "NewProjectButton";
-
