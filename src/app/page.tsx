@@ -30,7 +30,7 @@ import { useFlowStore } from "@/store/useFlowStore";
 import { exportFlowToPNG, exportFlowToSVG } from "@/lib/utils";
 import { FlowNode, TreeNode, DecomposeMode } from "@/types";
 import { useHistoryStorage } from "@/hooks/useHistoryStorage";
-import { ArrowLeft } from "lucide-react";
+import { CheckSquare, CalendarCheck, ListChecks, Rocket, Brain, BookOpen, Lightbulb, FlaskConical } from "lucide-react";
 
 const nodeTypes = {
   custom: CustomNode,
@@ -46,7 +46,7 @@ function HomeContent() {
     message: string;
     type: "success" | "error";
   } | null>(null);
-  const [showNewFlowModal, setShowNewFlowModal] = useState(false);
+  
   const [homeIsLoading, setHomeIsLoading] = useState(false);
   const [homeError, setHomeError] = useState<string | null>(null);
 
@@ -67,6 +67,23 @@ function HomeContent() {
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState([]);
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState([]);
   const [rf, setRf] = useState<ReactFlowInstance | null>(null);
+  const [currentMode, setCurrentMode] = useState<DecomposeMode>("concept");
+  const [examplePreset, setExamplePreset] = useState<string | undefined>(undefined);
+  const [presetKey, setPresetKey] = useState<number>(0);
+
+  // 首页示例（胶囊）
+  const taskExamples = [
+    { Icon: CheckSquare, text: "Start a company" },
+    { Icon: CalendarCheck, text: "Begin triathlon" },
+    { Icon: ListChecks, text: "Build a Astro Blog" },
+    { Icon: Rocket, text: "Ship a marketing campaign in 2 weeks" },
+  ];
+  const conceptExamples = [
+    { Icon: Brain, text: "Human nervous system" },
+    { Icon: BookOpen, text: "Modern and contemporary literature" },
+    { Icon: Lightbulb, text: "Ethereum ecosystem" },
+    { Icon: FlaskConical, text: "Basic RAG application" },
+  ];
 
   useEffect(() => {
     if (!initialized && !treeData && !isDecomposing) {
@@ -132,7 +149,6 @@ function HomeContent() {
       setTreeData(rootNode);
       setStoreDecomposeMode(decomposeMode);
       startStreamDecomposition(inputText, decomposeMode);
-      setShowNewFlowModal(false);
     } catch (error: unknown) {
       console.error("分解失败:", error);
       setHomeError(error instanceof Error ? error.message : "发生未知错误");
@@ -190,7 +206,13 @@ function HomeContent() {
         <Sidebar
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
-          onNewFlow={() => setShowNewFlowModal(true)}
+          onNewFlow={() => {
+            if (treeData) {
+              autoSaveHistory();
+            }
+            resetState();
+            clearCurrentSession();
+          }}
         />
 
         <Canvas
@@ -250,41 +272,40 @@ function HomeContent() {
                   isLoading={homeIsLoading}
                   error={homeError}
                   className="max-w-[650px] mx-auto"
+                  presetText={examplePreset}
+                  presetMode={currentMode}
+                  onModeChange={(m) => setCurrentMode(m)}
+                  presetKey={presetKey}
                 />
+                {/* 示例胶囊：仅显示当前模式 */}
+                <div className="max-w-[650px] mx-auto mt-2">
+                  <div className="text-xs font-semibold text-gray-500 mb-2 pl-1">
+                    {currentMode === 'task' ? 'Task' : 'Concept'}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(currentMode === 'task' ? taskExamples : conceptExamples).map(({ Icon, text }) => (
+                      <button
+                        key={text}
+                        type="button"
+                        onClick={() => {
+                          setExamplePreset(text);
+                          setPresetKey((k) => k + 1);
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-700 shadow-sm hover:bg-gray-50"
+                      >
+                        <Icon className="w-4 h-4 text-gray-500" />
+                        <span className="text-[14px] font-medium leading-none">{text}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           )}
         </Canvas>
       </div>
 
-      {showNewFlowModal && (
-        <div className="fixed inset-0 z-50">
-          <div
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-            onClick={() => setShowNewFlowModal(false)}
-          />
-          <div className="relative h-full w-full flex items-center justify-center p-6">
-            <div className="w-full max-w-[650px] mx-auto">
-              <div className="mb-3">
-                <button
-                  type="button"
-                  onClick={() => setShowNewFlowModal(false)}
-                  className="flex items-center gap-2 font-semibold text-gray-100 hover:text-gray-200"
-                  aria-label="Back"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Back</span>
-                </button>
-              </div>
-              <DecomposeInput
-                onSubmit={handleNewFlowSubmit}
-                isLoading={homeIsLoading}
-                error={homeError}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       <NodeEditor isOpen={isNodeEditorOpen} onClose={handleCloseNodeEditor} />
 

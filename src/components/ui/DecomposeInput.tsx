@@ -12,6 +12,11 @@ export interface DecomposeInputProps {
   className?: string;
   placeholder?: string;
   defaultMode?: DecomposeMode;
+  // 新增：外部预填与模式监听
+  presetText?: string;
+  presetMode?: DecomposeMode;
+  onModeChange?: (mode: DecomposeMode) => void;
+  presetKey?: number;
 }
 
 export function DecomposeInput({
@@ -21,6 +26,10 @@ export function DecomposeInput({
   className = "",
   placeholder = "Deconstruct anything.",
   defaultMode = "concept",
+  presetText,
+  presetMode,
+  onModeChange,
+  presetKey,
 }: DecomposeInputProps) {
   const [inputText, setInputText] = useState("");
   const [decomposeMode, setDecomposeMode] =
@@ -49,6 +58,29 @@ export function DecomposeInput({
   useEffect(() => {
     autoResize();
   }, []);
+
+  // 当父组件传入预填文本时，自动填充并聚焦
+  useEffect(() => {
+    if (typeof presetText === 'string') {
+      setInputText(presetText);
+      requestAnimationFrame(() => {
+        autoResize();
+        textareaRef.current?.focus();
+      });
+    }
+  }, [presetText, presetKey]);
+
+  // 当父组件传入模式时，同步更新
+  useEffect(() => {
+    if (presetMode) {
+      setDecomposeMode(presetMode);
+    }
+  }, [presetMode]);
+
+  // 将内部模式变化回调给父组件
+  useEffect(() => {
+    onModeChange?.(decomposeMode);
+  }, [decomposeMode, onModeChange]);
 
   return (
     <div
