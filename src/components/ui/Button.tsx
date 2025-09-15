@@ -156,8 +156,7 @@ export interface SendButtonProps
 }
 
 export const SendButton = forwardRef<HTMLButtonElement, SendButtonProps>(
-  ({ className, disabled, children, ...props }, ref) => {
-    const isLoading = false;
+  ({ className, disabled, children, isLoading = false, ...props }, ref) => {
     return (
       <button
         ref={ref}
