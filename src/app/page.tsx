@@ -361,7 +361,7 @@ function HomeContent() {
     return flowNodes.map((n) => ({
       ...n,
       style: {
-        ...(n as any).style,
+        ...(n.style ?? {}),
         opacity: pathNodeIds.has(n.id) ? 1 : 0.5,
         transition: 'opacity 150ms ease, filter 150ms ease',
       },
@@ -373,7 +373,7 @@ function HomeContent() {
     return flowEdges.map((e) => ({
       ...e,
       style: {
-        ...(e as any).style,
+        ...(e.style ?? {}),
         opacity: pathEdgeIds.has(e.id) ? 1 : 0.5,
         stroke: pathEdgeIds.has(e.id) ? '#475569' : '#94a3b8',
         strokeWidth: pathEdgeIds.has(e.id) ? 2.5 : 1.5,
