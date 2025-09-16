@@ -21,7 +21,7 @@ export function Canvas({ children, className = '', progressBar }: CanvasProps) {
         {children}
       </div>
       
-      {/* 背景网格（可选） */}
+      {/* 背景网格 */}
       <div 
         className="absolute inset-0 opacity-10 pointer-events-none"
         style={{

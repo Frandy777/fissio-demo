@@ -67,7 +67,7 @@ export function useHistoryStorage(): Omit<HistoryStorageHook, 'saveHistory'> & {
   // 开始新的分解会话
   const startNewSession = useCallback((rootContent: string) => {
     // 使用最新的全局状态，避免闭包过期
-    const { nodes, edges, treeData: latestTreeData, selectedNode } = useFlowStore.getState()
+    const { nodes, edges, treeData: latestTreeData, selectedNode, nodeWidths } = useFlowStore.getState()
     if (!latestTreeData) return
 
     const timestamp = Date.now()
@@ -81,7 +81,8 @@ export function useHistoryStorage(): Omit<HistoryStorageHook, 'saveHistory'> & {
         nodes,
         edges,
         treeData: latestTreeData,
-        selectedNode
+        selectedNode,
+        nodeWidths
       }
     }
 
@@ -95,7 +96,7 @@ export function useHistoryStorage(): Omit<HistoryStorageHook, 'saveHistory'> & {
 
   // 更新当前会话
   const updateCurrentSession = useCallback(() => {
-    const { nodes, edges, treeData: latestTreeData, selectedNode } = useFlowStore.getState()
+    const { nodes, edges, treeData: latestTreeData, selectedNode, nodeWidths } = useFlowStore.getState()
     const sessionId = currentSessionIdRef.current
     if (!sessionId || !latestTreeData) return
 
@@ -108,7 +109,8 @@ export function useHistoryStorage(): Omit<HistoryStorageHook, 'saveHistory'> & {
               nodes,
               edges,
               treeData: latestTreeData,
-              selectedNode
+              selectedNode,
+              nodeWidths
             }
           }
         : item

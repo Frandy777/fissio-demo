@@ -164,11 +164,11 @@ export class ProblemDecomposerAgent {
       }
 
       const parsed = DecomposeResponseSchema.parse(parsedJson);
-      console.log("分解成功");
+        console.log("Decomposition successful");
       return { ...parsed, mode }; // 添加模式到返回结果
       
     } catch (error) {
-      console.error("分解失败:", error instanceof Error ? error.message : String(error));
+      console.error("Decomposition failed:", error instanceof Error ? error.message : String(error));
       throw error;
     }
   }
@@ -187,7 +187,7 @@ export class WorkflowController {
 
   // 终止当前分解过程
   terminateDecomposition(): void {
-    console.log('收到终止分解请求');
+    console.log('Received termination request');
     this.shouldTerminate = true;
   }
 
@@ -342,7 +342,7 @@ export class WorkflowController {
 
       yield {
         type: 'start',
-        message: `开始分析任务（${mode === 'task' ? '任务模式' : '概念模式'}）...`,
+        message: `Starting analysis task (${mode === 'task' ? 'task mode' : 'concept mode'})...`,
         state: this.createWorkflowState(currentTree)
       };
 
@@ -350,7 +350,7 @@ export class WorkflowController {
       yield {
         type: 'decompose_node',
         nodeId: 'root',
-        message: '正在分解根任务...',
+        message: 'Decomposing root task...',
         state: this.createWorkflowState(currentTree)
       };
 
@@ -385,7 +385,7 @@ export class WorkflowController {
       yield {
         type: 'update_tree',
         tree: currentTree,
-        message: '根任务分解完成',
+        message: 'Root task decomposition completed',
         state: this.createWorkflowState(currentTree)
       };
 
@@ -399,7 +399,7 @@ export class WorkflowController {
           yield {
             type: 'terminated',
             finalTree: currentTree,
-            message: '分解过程已终止，保留当前结果',
+            message: 'Decomposition process terminated, keeping current result',
             state: this.createWorkflowState(currentTree)
           };
           return;
@@ -420,7 +420,7 @@ export class WorkflowController {
             yield {
               type: 'terminated',
               finalTree: currentTree,
-              message: '分解过程已终止，保留当前结果',
+              message: 'Decomposition process terminated, keeping current result',
               state: this.createWorkflowState(currentTree)
             };
             return;
@@ -430,7 +430,7 @@ export class WorkflowController {
             type: 'judge_node',
             nodeId: leafNode.id,
             result: false,
-            message: `正在判断节点"${leafNode.content}"...`,
+            message: `Judging node "${leafNode.content}"...`,
             state: this.createWorkflowState(currentTree)
           };
 
@@ -447,7 +447,7 @@ export class WorkflowController {
               type: 'judge_node',
               nodeId: leafNode.id,
               result: true,
-              message: `节点"${leafNode.content}"可以直接回答`,
+              message: `Node "${leafNode.content}" can directly answer`,
               state: this.createWorkflowState(currentTree)
             };
           } else {
@@ -455,7 +455,7 @@ export class WorkflowController {
             yield {
               type: 'decompose_node',
               nodeId: leafNode.id,
-              message: `正在分解节点"${leafNode.content}"...`,
+              message: `Decomposing node "${leafNode.content}"...`,
               state: this.createWorkflowState(currentTree)
             };
 
@@ -472,7 +472,7 @@ export class WorkflowController {
               yield {
                 type: 'update_tree',
                 tree: currentTree,
-                message: `节点"${leafNode.content}"分解完成`,
+                message: `Node "${leafNode.content}" decomposition completed`,
                 state: this.createWorkflowState(currentTree)
               };
             } catch {
@@ -486,7 +486,7 @@ export class WorkflowController {
                 type: 'judge_node',
                 nodeId: leafNode.id,
                 result: true,
-                message: `节点"${leafNode.content}"分解失败，标记为可直接回答`,
+                message: `Node "${leafNode.content}" decomposition failed, marked as can directly answer`,
                 state: this.createWorkflowState(currentTree)
               };
             }
@@ -499,7 +499,7 @@ export class WorkflowController {
           yield {
             type: 'progress',
             progress,
-            message: `处理进度: ${state.processedNodes}/${state.totalNodes}`,
+            message: `Processing progress: ${state.processedNodes}/${state.totalNodes}`,
             state
           };
         }
@@ -512,14 +512,14 @@ export class WorkflowController {
       yield {
         type: 'complete',
         finalTree: currentTree,
-        message: '任务分解完成！',
+        message: 'Done',
         state: finalState
       };
 
     } catch (error) {
       yield {
         type: 'error',
-        error: error instanceof Error ? error.message : '工作流执行过程中发生错误'
+        error: error instanceof Error ? error.message : 'Error'
       };
     }
   }

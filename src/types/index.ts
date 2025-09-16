@@ -126,7 +126,7 @@ export interface FlowState {
   toggleNodeExpanded: (nodeId: string) => void
   updateTreeNodeContent: (nodeId: string, newContent: string) => Promise<void>
   redecomposeFromNode: (nodeId: string, content: string, mode?: DecomposeMode) => Promise<void>
-  loadState: (state: { nodes: FlowNode[], edges: FlowEdge[], treeData: TreeNode | null, selectedNode?: FlowNode | null }) => void
+  loadState: (state: { nodes: FlowNode[], edges: FlowEdge[], treeData: TreeNode | null, selectedNode?: FlowNode | null, nodeWidths?: Record<string, number> }) => void
   resetState: () => void
   setAutoSaveCallback: (callback: (() => void) | null) => void
   setDecomposeMode: (mode: DecomposeMode) => void // 新增：设置分解模式
@@ -148,6 +148,7 @@ export interface HistoryItem {
     edges: FlowEdge[]
     treeData: TreeNode | null
     selectedNode: FlowNode | null
+    nodeWidths?: Record<string, number>
   }
 }
 

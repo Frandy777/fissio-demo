@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import ReactFlow, {
   Background,
   MiniMap,
@@ -91,6 +91,55 @@ function HomeContent() {
   );
   const [presetKey, setPresetKey] = useState<number>(0);
   const dragStartXRef = useRef<Map<string, number>>(new Map());
+  const selectedNodeFromStore = useFlowStore((state) => state.selectedNode);
+  const [hoverNodeId, setHoverNodeId] = useState<string | null>(null);
+
+  // 计算当前激活节点（优先 Hover，其次选中）
+  const activeNodeId = hoverNodeId || selectedNodeFromStore?.id || null;
+
+  // 计算从根到激活节点的路径节点与边集合
+  const { pathNodeIds, pathEdgeIds } = useMemo(() => {
+    const result = { pathNodeIds: new Set<string>(), pathEdgeIds: new Set<string>() };
+    if (!activeNodeId) return result;
+
+    // 优先从树数据取根ID，否则从边推断
+    const rootId = treeData?.id || (() => {
+      const targeted = new Set(flowEdges.map((e) => e.target));
+      const maybeRoot = flowNodes.find((n) => !targeted.has(n.id));
+      return maybeRoot?.id || null;
+    })();
+    if (!rootId) return result;
+
+    // 构建 child -> parent 映射
+    const parentOf = new Map<string, string>();
+    for (const e of flowEdges) parentOf.set(e.target, e.source);
+
+    // 自底向上回溯到根
+    const chain: string[] = [];
+    let cur: string | undefined | null = activeNodeId;
+    let guard = 0;
+    while (cur && guard++ < 10000) {
+      chain.push(cur);
+      if (cur === rootId) break;
+      cur = parentOf.get(cur) || null;
+    }
+    if (chain.length === 0) return result;
+
+    // 构建集合
+    for (let i = 0; i < chain.length; i++) {
+      const id = chain[i];
+      result.pathNodeIds.add(id);
+      if (i < chain.length - 1) {
+        const childId = chain[i];
+        const parentId = chain[i + 1];
+        // 注意：chain 为从 active → root，边方向为 parent → child
+        // 上面顺序相反，因此这里交换
+        const edgeId = `${parentId}-${childId}`;
+        result.pathEdgeIds.add(edgeId);
+      }
+    }
+    return result;
+  }, [activeNodeId, flowEdges, flowNodes, treeData]);
 
   // 首页示例（胶囊）
   const taskExamples = [
@@ -306,6 +355,32 @@ function HomeContent() {
     flowNodes.length === 0 &&
     flowEdges.length === 0;
 
+  // 根据路径集合，构建用于渲染的节点/边（应用高亮与淡化）
+  const displayNodes = useMemo(() => {
+    if (!activeNodeId) return flowNodes;
+    return flowNodes.map((n) => ({
+      ...n,
+      style: {
+        ...(n as any).style,
+        opacity: pathNodeIds.has(n.id) ? 1 : 0.5,
+        transition: 'opacity 150ms ease, filter 150ms ease',
+      },
+    }));
+  }, [flowNodes, activeNodeId, pathNodeIds]);
+
+  const displayEdges = useMemo(() => {
+    if (!activeNodeId) return flowEdges;
+    return flowEdges.map((e) => ({
+      ...e,
+      style: {
+        ...(e as any).style,
+        opacity: pathEdgeIds.has(e.id) ? 1 : 0.5,
+        stroke: pathEdgeIds.has(e.id) ? '#475569' : '#94a3b8',
+        strokeWidth: pathEdgeIds.has(e.id) ? 2.5 : 1.5,
+      },
+    }));
+  }, [flowEdges, activeNodeId, pathEdgeIds]);
+
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       <div className="flex-1 flex overflow-hidden">
@@ -344,12 +419,14 @@ function HomeContent() {
                 onExportSVG={handleExportSVG}
               />
               <ReactFlow
-                nodes={flowNodes}
-                edges={flowEdges}
+                nodes={displayNodes}
+                edges={displayEdges}
                 onNodesChange={handleNodesChange}
                 onEdgesChange={handleEdgesChange}
                 onConnect={onConnect}
                 onNodeClick={handleNodeClick}
+                onNodeMouseEnter={(_e, node) => setHoverNodeId(node.id)}
+                onNodeMouseLeave={() => setHoverNodeId(null)}
                 onNodeDragStart={handleNodeDragStart}
                 onNodeDrag={handleNodeDrag}
                 onNodeDragStop={handleNodeDragStop}

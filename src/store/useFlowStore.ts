@@ -623,12 +623,13 @@ export const useFlowStore = create<FlowState>((set, get) => ({
     }
   },
 
-  loadState: (state: { nodes: FlowNode[], edges: FlowEdge[], treeData: TreeNode | null, selectedNode?: FlowNode | null }) => {
+  loadState: (state: { nodes: FlowNode[], edges: FlowEdge[], treeData: TreeNode | null, selectedNode?: FlowNode | null, nodeWidths?: Record<string, number> }) => {
     set({
       nodes: state.nodes,
       edges: state.edges,
       treeData: state.treeData,
       selectedNode: state.selectedNode || null,
+      nodeWidths: state.nodeWidths || {},
     })
   },
 
