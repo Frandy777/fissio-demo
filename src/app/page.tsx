@@ -126,7 +126,9 @@ function HomeContent() {
         '.react-flow__node',
       );
       elements.forEach((el) => {
-        const id = el.getAttribute('data-id') || (el.dataset ? (el.dataset as any).id : undefined);
+        const idAttr = el.getAttribute('data-id');
+        const dataId = el.dataset ? el.dataset.id : undefined;
+        const id = idAttr ?? dataId;
         if (!id) return;
         const w = el.offsetWidth;
         if (!Number.isFinite(w) || w <= 0) return;
@@ -146,12 +148,12 @@ function HomeContent() {
     (changes: NodeChange[]) => {
       // 钳制水平位移：保持 x 不变，仅允许 y 改变
       const clamped = changes.map((chg) => {
-        if (chg.type === "position" && (chg as any).position) {
+        if (chg.type === "position" && 'position' in chg && chg.position) {
           const current = flowNodes.find((n) => n.id === chg.id);
           if (current) {
             return {
               ...chg,
-              position: { x: current.position.x, y: (chg as any).position.y },
+              position: { x: current.position.x, y: chg.position.y },
             } as NodeChange;
           }
         }

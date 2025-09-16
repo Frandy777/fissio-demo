@@ -299,7 +299,6 @@ export function treeToFlowData(
   const nodes: FlowNode[] = []
   const edges: FlowEdge[] = []
 
-  const levelWidth = 300 // 每层之间的水平间距
   const nodeHeight = 100 // 每个节点的最小垂直间距（适当缩小以降低整体高度）
 
   // 第一遍：计算每个节点需要的子树高度
