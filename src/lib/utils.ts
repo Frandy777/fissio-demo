@@ -144,6 +144,32 @@ export const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   defaultExpandedLevels: 2 // 默认展开层级数（0-2层展开）
 }
 
+// —— 按层级的样式与间距 Token（最简） ——
+export type LevelTextStyle = {
+  fontSize: number
+  fontWeight: 400 | 500 | 600
+}
+
+// 字号/字重：L0 最醒目，随层级递减
+export function getLevelTextStyle(level: number): LevelTextStyle {
+  const styles: LevelTextStyle[] = [
+    { fontSize: 16, fontWeight: 600 },
+    { fontSize: 14, fontWeight: 600 },
+    { fontSize: 13, fontWeight: 500 },
+    { fontSize: 12, fontWeight: 500 },
+  ]
+  const idx = Math.max(0, Math.min(level, styles.length - 1))
+  return styles[idx]
+}
+
+// 垂直间距：仅按层级控制，不改水平缩进
+// 该值用于树布局中叶子/折叠节点所占用的最小垂直空间
+export function getLevelVerticalSpace(level: number): number {
+  const spaces = [120, 96, 80, 64] // L0 → L3+
+  const idx = Math.max(0, Math.min(level, spaces.length - 1))
+  return spaces[idx]
+}
+
 // 估算节点渲染宽度（与 `CustomNode` 的 min/max 保持一致范围）
 const MIN_NODE_WIDTH = 240
 const MAX_NODE_WIDTH = 300
@@ -299,20 +325,18 @@ export function treeToFlowData(
   const nodes: FlowNode[] = []
   const edges: FlowEdge[] = []
 
-  const nodeHeight = 100 // 每个节点的最小垂直间距（适当缩小以降低整体高度）
-
   // 第一遍：计算每个节点需要的子树高度
-  const calculateSubtreeHeight = (node: TreeNode): number => {
+  const calculateSubtreeHeight = (node: TreeNode, level: number): number => {
     if (!node.children || node.children.length === 0 || node.expanded === false) {
-      return nodeHeight // 叶子节点或折叠节点只占用自身高度
+      return getLevelVerticalSpace(level) // 叶子/折叠：按层级的最小垂直空间
     }
 
-    // 递归计算所有子节点需要的总高度
-    const childrenHeights = node.children.map(child => calculateSubtreeHeight(child))
+    // 递归计算所有子节点需要的总高度（子层级 +1）
+    const childrenHeights = node.children.map(child => calculateSubtreeHeight(child, level + 1))
     const totalChildrenHeight = childrenHeights.reduce((sum, height) => sum + height, 0)
 
-    // 返回子树总高度和当前节点高度的最大值
-    return Math.max(nodeHeight, totalChildrenHeight)
+    // 内部节点至少占用与本层等价的最小空间
+    return Math.max(getLevelVerticalSpace(level), totalChildrenHeight)
   }
 
   // 第二遍：递归分配位置
@@ -342,7 +366,7 @@ export function treeToFlowData(
       // 优先使用真实测量宽度，否则使用估算宽度
       const parentEstimatedWidth = nodeWidths[node.id] ?? estimateNodeWidth(node.content)
       // 计算每个子节点需要的高度
-      const childrenHeights = node.children.map(child => calculateSubtreeHeight(child))
+      const childrenHeights = node.children.map(child => calculateSubtreeHeight(child, level + 1))
       const totalChildrenHeight = childrenHeights.reduce((sum, height) => sum + height, 0)
 
       // 从当前节点位置开始，垂直居中分布子节点
@@ -376,7 +400,7 @@ export function treeToFlowData(
   }
 
   // 计算根节点需要的总高度
-  calculateSubtreeHeight(treeData)
+  calculateSubtreeHeight(treeData, 0)
 
   // 开始遍历，根节点居中
   traverseTree(treeData, startX, startY)
